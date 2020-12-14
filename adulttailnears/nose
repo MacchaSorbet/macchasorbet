@@ -1,0 +1,219 @@
+//Maccha Sorbet's Ear Script - 2008
+list list_one = ["Kiss","Poke","Nuzzle","Stroke"];
+
+//NAME STORE---------------------------------------------------------------
+string FriendCardName = "FriendList";
+string MateCardName = "MateList";
+string UnwantedCardName = "UnwantedList";
+string EnemyCardName = "EnemyList";
+string BannedCardName = "BannedList";
+list Friends;
+list Mates;
+list Unwanted;
+list Enemies;
+list Banned;
+
+//Variables used for reading data from the notecards...
+string tmpNoteCardName; // Name of the card to be read.
+list tmpLines;          // The resulting data pushed into a list
+integer tmpLineCount;   // The line count for the card reader
+key tmpCardKey;           // The key of thge card being read
+//END OF MESSAGE AND NAME STORE--------------------------------------------
+
+string owner;
+integer lock = FALSE;
+//integer listn;
+//integer rand;
+integer chan;
+
+initialize(string _action)
+{
+    //Due to the execution order when using dataserver, this function sets the first card to 
+    //be read, and the excetuion finishes when called again with the _action set to "finish".
+    if (_action == "")
+    {
+        Friends = [];
+        Mates = [];
+        Unwanted = [];
+        Enemies = [];
+        Banned = [];
+        loadNoteCard(FriendCardName);
+    }
+    else if (_action = "finish")
+        llOwnerSay("Nose lists fully loaded. Enjoy.");        
+}
+
+loadNoteCard( string _notecard )
+{
+    tmpLines = []; //clear the temp lines
+    tmpNoteCardName = _notecard;
+    tmpLineCount =0;
+    tmpCardKey = llGetNotecardLine(tmpNoteCardName, tmpLineCount);  
+}
+
+notecardFinished(string _notecard)
+{
+    // Called at the end of each notcard as it is read. The temp results are stored
+    // and the next card is commanded to be read.
+    if (_notecard == FriendCardName)
+    {
+        Friends = tmpLines;
+        loadNoteCard(MateCardName);
+    }
+    else if (_notecard == MateCardName)
+    {
+        Mates = tmpLines;
+        loadNoteCard(UnwantedCardName);
+    }
+    else if (_notecard == UnwantedCardName)
+    {
+        Unwanted = tmpLines;
+        loadNoteCard(EnemyCardName);
+    }
+    else if (_notecard == EnemyCardName)
+    {
+        Enemies = tmpLines;
+        loadNoteCard(BannedCardName); 
+    }    
+    else if (_notecard == BannedCardName)
+    {
+        Banned = tmpLines;
+        initialize("finish");  // Finally pass exection to finish the initialization.   
+    }  
+}
+
+string NameType(string Name)
+{
+    integer index = llListFindList( Friends, [Name] );
+    if(index != -1) return "Friend";
+    index = llListFindList( Mates, [Name] );
+    if(index != -1) return "Mate";
+    index = llListFindList( Unwanted, [Name] );
+    if(index != -1) return "Unwanted";
+    index = llListFindList( Enemies, [Name] );
+    if(index != -1) return "Enemy";
+    index = llListFindList( Banned, [Name] );
+    if(index != -1) return "Banned";
+    
+    return "Default";
+}
+
+string ShowMessage(string n, string m)
+{
+    string NameTypeVal = NameType(n);
+    if(NameTypeVal == "Default")
+    {
+        if(m == "Kiss") return " " + n + " kisses " + owner + "'s nose.";
+        if(m == "Poke") return " " + n + " pokes " + owner + "'s nose, causing " + owner + " to giggle happily.";
+        if(m == "Nuzzle") return " " + n + " nuzzles " + owner + "'s nose, causing " + owner + " to smile happily.";
+        if(m == "Stroke") return " " + n + " strokes " + owner + "'s nose. " + owner + " closes their eyes and purrs happily.";
+    }
+    else if(NameTypeVal == "Friend")
+    {
+        if(m == "Kiss") return " " + n + " kisses " + owner + "'s nose playfully. " + owner + " giggles and blushes.";
+        if(m == "Poke") return " " + n + " pokes " + owner + "'s nose, and giggles. " + owner + " grins, then tackles " + n + " to the ground.";
+        if(m == "Nuzzle") return " " + n + " nuzzles " + owner + "'s nose. " + owner + " nuzzles back and sighs softly.";
+        if(m == "Stroke") return " " + n + " strokes " + owner + "'s nose gently. " + owner + " purrs happily.";
+    }
+    else if(NameTypeVal == "Mate")
+    {
+        if(m == "Kiss") return " " + n + " kisses " + owner + "'s nose passionately. " + owner + " sighs softly and blushes crimson.";
+        if(m == "Poke") return " " + n + " pokes " + owner + "'s nose, and giggles. " + owner + " grins, then tackles " + n + " to the ground playfully, before staring into their eyes, and kissing softly.";
+        if(m == "Nuzzle") return " " + n + " nuzzles " + owner + "'s nose. " + owner + " blushes and kisses " + n + " passionately.";
+        if(m == "Stroke") return " " + n + " strokes " + owner + "'s nose gently. " + owner + " purrs and nuzzles them closely, pawing gently at them.";     
+    }
+    else if(NameTypeVal == "Unwanted")
+    {
+        if(m == "Kiss") return " " + n + " thinks about kissing " + owner + "'s nose. But knows it will never happen.";
+        if(m == "Poke") return " " + n + " pokes " + owner + "'s nose, but looks sheepish when " + owner + " scowls at them.";
+        if(m == "Nuzzle") return " " + owner + " sees " + n + " looking at their muzzle, and scowls angrily.";
+        if(m == "Stroke") return " " + n + " reaches out to stroke " + owner + "'s nose, but backs away from " + owner + "'s icey glare.";
+    }
+    else if(NameTypeVal == "Enemy")
+    {
+        if(m == "Kiss") return " " + n + " leans in to kiss " + owner + "'s nose, but gets slapped aside.";
+        if(m == "Poke") return " " + n + " pokes " + owner + "'s nose, and says 'Beep!'. " + owner + " breaks " + n + "'s nose. 'Beep.' ¬_¬";
+        if(m == "Nuzzle") return " " + n + " wants to nuzzle " + owner + "'s nose, but gets so nervous they poo a little.";
+        if(m == "Stroke") return " " + n + " reaches out to stroke " + owner + "'s nose, but goes pale with shock when " + owner + " bites their fingers off.";
+    }
+    return "";
+}
+
+default
+{
+    attach(key n)
+    {
+        llResetScript();
+    }
+    on_rez(integer n)
+    {
+        llResetScript();
+    }
+    state_entry()
+    {        
+        chan = 100 + (integer)llFrand(20000);
+        owner = llKey2Name(llGetOwner());
+        llListen(chan,"","","");
+        initialize("");
+    }
+    touch_start(integer total_number)
+    {
+        key dk = llDetectedKey(0);
+        string Name = llDetectedName(0);
+        if(dk == llGetOwner())
+            llDialog(dk,"Change nose option,",["Lock","Unlock","Reload"],chan);
+        else if(lock == FALSE)
+        {
+            integer index = llListFindList( Banned, [Name] );
+            if(index == -1)
+            {
+                llDialog(dk,"What do you want to do with "+owner+"'s nose?",list_one,chan);
+            }
+        }
+        else
+            llInstantMessage(dk,"This nose is locked.");
+    }
+    listen(integer c, string n, key i, string m)
+    {
+        // tail commands
+        if(m == "Lock")
+        {
+            lock = TRUE;
+            llOwnerSay("Locked");
+        }
+        else if(m == "Unlock")
+        {
+            lock = FALSE;
+            llOwnerSay("Unlocked");
+        }
+        else if(m == "Reload")
+        {
+            initialize("");
+        }
+        else
+        {
+            llSay(0,ShowMessage(n, m));
+        }
+    }
+
+    dataserver(key _query_id, string _data) 
+    {
+        if (_query_id == tmpCardKey)
+        {
+            // this is a line of our notecard
+            if (_data != EOF)
+            {    
+                // increment line count
+                tmpLines += [_data];
+                //request a next line
+                tmpLineCount++;
+                tmpCardKey = llGetNotecardLine(tmpNoteCardName, tmpLineCount);
+            }
+            else
+            {
+                notecardFinished(tmpNoteCardName);   
+            }
+        }
+    }
+
+}
