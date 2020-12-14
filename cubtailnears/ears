@@ -1,0 +1,229 @@
+//Maccha Sorbet's Ear Script - 2008
+list list_one = ["Grab","Flick","Tweak","Play","Ruffle","Tickle"];
+
+//NAME STORE---------------------------------------------------------------
+string FriendCardName = "FriendList";
+string ParentCardName = "ParentList";
+string UnwantedCardName = "UnwantedList";
+string EnemyCardName = "EnemyList";
+string BannedCardName = "BannedList";
+list Friends;
+list Parents;
+list Unwanted;
+list Enemies;
+list Banned;
+
+//Variables used for reading data from the notecards...
+string tmpNoteCardName; // Name of the card to be read.
+list tmpLines;          // The resulting data pushed into a list
+integer tmpLineCount;   // The line count for the card reader
+key tmpCardKey;           // The key of thge card being read
+//END OF MESSAGE AND NAME STORE--------------------------------------------
+
+string owner;
+integer lock = FALSE;
+//integer listn;
+//integer rand;
+integer chan;
+
+initialize(string _action)
+{
+    //Due to the execution order when using dataserver, this function sets the first card to 
+    //be read, and the excetuion finishes when called again with the _action set to "finish".
+    if (_action == "")
+    {
+        Friends = [];
+        Parents = [];
+        Unwanted = [];
+        Enemies = [];
+        Banned = [];
+        loadNoteCard(FriendCardName);
+    }
+    else if (_action = "finish")
+        llOwnerSay("Ear lists fully loaded. Enjoy.");        
+}
+
+loadNoteCard( string _notecard )
+{
+    tmpLines = []; //clear the temp lines
+    tmpNoteCardName = _notecard;
+    tmpLineCount =0;
+    tmpCardKey = llGetNotecardLine(tmpNoteCardName, tmpLineCount);  
+}
+
+notecardFinished(string _notecard)
+{
+    // Called at the end of each notcard as it is read. The temp results are stored
+    // and the next card is commanded to be read.
+    if (_notecard == FriendCardName)
+    {
+        Friends = tmpLines;
+        loadNoteCard(ParentCardName);
+    }
+    else if(_notecard == ParentCardName)
+    {
+        Parents = tmpLines;
+        loadNoteCard(UnwantedCardName);
+    }
+    else if (_notecard == UnwantedCardName)
+    {
+        Unwanted = tmpLines;
+        loadNoteCard(EnemyCardName);
+    }
+    else if (_notecard == EnemyCardName)
+    {
+        Enemies = tmpLines;
+        loadNoteCard(BannedCardName); 
+    }    
+    else if (_notecard == BannedCardName)
+    {
+        Banned = tmpLines;
+        initialize("finish");  // Finally pass exection to finish the initialization.   
+    }     
+}
+
+string NameType(string Name)
+{
+    integer index = llListFindList( Friends, [Name] );
+    if(index != -1) return "Friend";
+    index = llListFindList( Parents, [Name] );
+    if(index != -1) return "Parent";
+    index = llListFindList( Unwanted, [Name] );
+    if(index != -1) return "Unwanted";
+    index = llListFindList( Enemies, [Name] );
+    if(index != -1) return "Enemy";
+    index = llListFindList( Banned, [Name] );
+    if(index != -1) return "Banned";
+
+    return "Default";
+}
+
+string ShowMessage(string n, string m)
+{
+    string NameTypeVal = NameType(n);
+    if(NameTypeVal == "Default")
+    {
+        if(m == "Grab") return " "+ n + " grabs " + owner + "'s ear and fiddles.";
+        if(m == "Flick") return " "+ n + " flicks " + owner + "'s ear playfully. " + owner +" giggles and flicks back.";
+        if(m == "Tweak") return " "+ n + " pulls " + owner + "'s ear and runs away giggling like a schoolgirl.";
+        if(m == "Play") return " "+ n + " plays with " + owner + "'s ear, enjoying every moment of the soft furiness.";
+        if(m == "Ruffle") return " "+ n + " ruffles " + owner + "'s ear and gets a warm, satisfying feeling inside.";
+        if(m == "Tickle") return " "+ n + " tickles " + owner + "'s ear. " + owner + " turns and tickles their ribs.";
+    }
+    else if(NameTypeVal == "Friend")
+    {
+        if(m == "Grab") return " "+ n + " grabs " + owner + "'s ears, pulls them down like wings, and starts making airoplane noises.";
+        if(m == "Flick") return " "+ n + " flicks " + owner + "'s ear, and runs away giggling. " + owner + " giggles and chases.";
+        if(m == "Tweak") return " "+ n + " licks their finger and shoves it into " + owner + "'s ear. " + owner + " pulls a face and yells 'ewwwww!'";
+        if(m == "Play") return " "+ n + " throws a water baloon at " + owner + ", filling their ear with water. " + owner + " giggles and throws a water baloon into " + n + "'s face.";
+        if(m == "Ruffle") return " "+ n + " ruffles " + owner + "'s ears. " + owner + " giggles and runs away.";
+        if(m == "Tickle") return " "+ n + " tickles behind " + owner + "'s ears. " + owner + " giggles and tries to stop their leg from shaking.";
+    }
+    else if(NameTypeVal == "Parent")
+    {
+        if(m == "Grab") return " "+ n + " grabs " + owner + "'s ear and marches them into a corner for a good telling off.";
+        if(m == "Flick") return " "+ n + " flicks " + owner + "'s ear and sternly remarks: 'Behave.'";
+        if(m == "Tweak") return " "+ n + " tweaks " + owner + "'s ears into a tidier position, and wipes their face with a tissue. " + owner + " pulls a face and tries to get away.";
+        if(m == "Play") return " "+ n + " plays with " + owner + "'s ears, rubbing them gently to lure " + owner + " to sleep.";
+        if(m == "Ruffle") return " "+ n + " ruffles " + owner + "'s ears. " + owner + " giggles and smiles up at them.";
+        if(m == "Tickle") return " "+ n + " tickles behind " + owner + "'s ears. " + owner + " wriggles and giggles.";
+    }
+    else if(NameTypeVal == "Unwanted")
+    {
+        if(m == "Grab") return " "+ n + " grabs " + owner + "'s ear. " + owner + " bats their paw away.'";
+        if(m == "Flick") return " "+ n + " blows into " + owner + "'s ear. " + owner +" raises an eyebrow at them.";
+        if(m == "Tweak") return " "+ n + " pulls a muscle trying to reach " + owner + "'s ears.";
+        if(m == "Play") return " "+ n + " tries to play with " + owner + "'s ear, but can't reach.";
+        if(m == "Ruffle") return " "+ n + " strokes " + owner + "'s ear. " + owner + " seems unimpressed.";
+        if(m == "Tickle") return " "+ n + " tries to tickle " + owner + "'s ear. But " + owner + " is not ticklish.";
+    }
+    else if(NameTypeVal == "Enemy")
+    {
+        if(m == "Grab") return " "+ n + " grabs " + owner + "'s ear. " + owner + " turns and yells 'Ouch! Get off me you doody-head! I hate you!'";
+        if(m == "Flick") return " "+ n + " flicks " + owner + "'s ear, and receives a scolding from their mommy.";
+        if(m == "Tweak") return " "+ n + " tries to tweak " + owner + "'s ear, but trips over and starts to cry.";
+        if(m == "Play") return " "+ n + " starts to play with " + owner + "'s ears. Owner panicks and yells: 'HELP ME! I NEED AN ADULT! I NEED AN ADULT!'";
+        if(m == "Ruffle") return " "+ n + " wants to ruffle " + owner + "'s ears, but has worms and can't stop scratching at their own bum.";
+        if(m == "Tickle") return " "+ n + " tries to tickle " + owner + "'s ear, but wet's themselves out of nervous incontinence.";
+    }
+    return "";
+}
+
+default
+{
+    attach(key n)
+    {
+        llResetScript();
+    }
+    on_rez(integer n)
+    {
+        llResetScript();
+    }
+    state_entry()
+    {        
+        chan = 100 + (integer)llFrand(20000);
+        owner = llKey2Name(llGetOwner());
+        llListen(chan,"","","");
+        initialize("");
+    }
+    touch_start(integer total_number)
+    {
+        key dk = llDetectedKey(0);
+        string Name = llDetectedName(0);
+        if(dk == llGetOwner())
+            llDialog(dk,"Change ear option,",["Lock","Unlock","Reload"],chan);
+        else if(lock == FALSE)
+        {
+            integer index = llListFindList( Banned, [Name] );
+            if(index == -1)
+            {
+                llDialog(dk,"What do you want to do with "+owner+"'s ears?",list_one,chan);
+            }
+        }
+        else
+            llInstantMessage(dk,"These ears are locked.");
+    }
+    listen(integer c, string n, key i, string m)
+    {
+        // tail commands
+        if(m == "Lock")
+        {
+            lock = TRUE;
+            llOwnerSay("Locked");
+        }
+        else if(m == "Unlock")
+        {
+            lock = FALSE;
+            llOwnerSay("Unlocked");
+        }
+        else if(m == "Reload")
+        {
+            initialize("");
+        }
+        else
+        {
+            llSay(0,ShowMessage(n, m));
+        }
+    }
+
+    dataserver(key _query_id, string _data) 
+    {
+        if (_query_id == tmpCardKey)
+        {
+            // this is a line of our notecard
+            if (_data != EOF)
+            {    
+                // increment line count
+                tmpLines += [_data];
+                //request a next line
+                tmpLineCount++;
+                tmpCardKey = llGetNotecardLine(tmpNoteCardName, tmpLineCount);
+            }
+            else
+            {
+                notecardFinished(tmpNoteCardName);   
+            }
+        }
+    }
+
+}
