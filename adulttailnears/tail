@@ -1,0 +1,259 @@
+//Maccha Sorbet's Tail Script - 2008
+list list_one = ["Yank","Squeeze","Hug","Play","Stroke","Tease","Fork","Brush","Fluff","Hump","Poke","Balloon"];
+
+//NAME STORE---------------------------------------------------------------
+string FriendCardName = "FriendList";
+string MateCardName = "MateList";
+string UnwantedCardName = "UnwantedList";
+string EnemyCardName = "EnemyList";
+string BannedCardName = "BannedList";
+list Friends;
+list Mates;
+list Unwanted;
+list Enemies;
+list Banned;
+
+//Variables used for reading data from the notecards...
+string tmpNoteCardName; // Name of the card to be read.
+list tmpLines;          // The resulting data pushed into a list
+integer tmpLineCount;   // The line count for the card reader
+key tmpCardKey;           // The key of thge card being read
+//END OF MESSAGE AND NAME STORE--------------------------------------------
+
+string owner;
+integer lock = FALSE;
+//integer listn;
+//integer rand;
+integer chan;
+
+initialize(string _action)
+{
+    //Due to the execution order when using dataserver, this function sets the first card to 
+    //be read, and the excetuion finishes when called again with the _action set to "finish".
+    if (_action == "")
+    {
+        Friends = [];
+        Mates = [];
+        Unwanted = [];
+        Enemies = [];
+        Banned = [];
+        loadNoteCard(FriendCardName);
+    }
+    else if (_action = "finish")
+        llOwnerSay("Tail lists fully loaded. Enjoy.");        
+}
+
+loadNoteCard( string _notecard )
+{
+    tmpLines = []; //clear the temp lines
+    tmpNoteCardName = _notecard;
+    tmpLineCount =0;
+    tmpCardKey = llGetNotecardLine(tmpNoteCardName, tmpLineCount);  
+}
+
+notecardFinished(string _notecard)
+{
+    // Called at the end of each notcard as it is read. The temp results are stored
+    // and the next card is commanded to be read.
+    if (_notecard == FriendCardName)
+    {
+        Friends = tmpLines;
+        loadNoteCard(MateCardName);
+    }
+    else if (_notecard == MateCardName)
+    {
+        Mates = tmpLines;
+        loadNoteCard(UnwantedCardName);
+    }
+    else if (_notecard == UnwantedCardName)
+    {
+        Unwanted = tmpLines;
+        loadNoteCard(EnemyCardName);
+    }
+    else if (_notecard == EnemyCardName)
+    {
+        Enemies = tmpLines;
+        loadNoteCard(BannedCardName); 
+    }    
+    else if (_notecard == BannedCardName)
+    {
+        Banned = tmpLines;
+        initialize("finish");  // Finally pass exection to finish the initialization.   
+    }   
+}
+
+string NameType(string Name)
+{
+    integer index = llListFindList( Friends, [Name] );
+    if(index != -1) return "Friend";
+    index = llListFindList( Mates, [Name] );
+    if(index != -1) return "Mate";
+    index = llListFindList( Unwanted, [Name] );
+    if(index != -1) return "Unwanted";
+    index = llListFindList( Enemies, [Name] );
+    if(index != -1) return "Enemy";
+    index = llListFindList( Banned, [Name] );
+    if(index != -1) return "Banned";
+    
+    return "Default";
+}
+
+string ShowMessage(string n, string m)
+{
+    string NameTypeVal = NameType(n);
+    if(NameTypeVal == "Default")
+    {
+        if(m == "Fluff") return " "+ n + " fluffs " + owner + "'s tail and ties a pretty pink ribbon in it ^^";
+        if(m == "Poke") return " "+ n + " pokes " + owner + "'s tail. " + owner +" raises an eyebrow at them.";
+        if(m == "Hump") return " "+ n + " grabs " + owner + "'s tail and starts humping it like life depends on it!";
+        if(m == "Brush") return " "+ n + " pulls out a bristle brush and begins to brush " + owner + "'s tail";
+        if(m == "Fork") return " "+ n + " grabs " + owner + "'s tail, jabs a fork into their butt, and HOLDS ON FOR THE BEST RIDE IN TOWN!  WOO!";
+        if(m == "Yank") return " "+ n + " has Yanked " + owner + "'s Tail! They must die!";
+        if(m == "Squeeze") return " "+ n + " Squeezes " + owner + "'s Tail. Ooh, feels so soft!";
+        if(m == "Hug") return " "+ n + " Hugs " + owner + "'s Tail Firmly and doesnt want to let go !";
+        if(m == "Play") return " "+ n + " plays with " + owner + "'s tail. Wheeee! :3";
+        if(m == "Stroke") return " "+ n + " reaches over and strokes " + owner + "'s tail, feeling the soft fur through their fingers.";
+        if(m == "Tease") return " "+ n + " Teases " + owner + " by playing with their Tail ;3";
+        if(m == "Balloon") return " "+ n + " ties a balloon to " + owner + "'s tail.";
+    }
+    else if(NameTypeVal == "Friend")
+    {
+        if(m == "Fluff") return " "+ n + " fluffs " + owner + "'s tail and ties a pretty pink ribbon in it. " + owner + " blushes.";
+        if(m == "Poke") return " "+ n + " runs their fingers down " + owner + "'s back and pokes. " + owner +" shivers with delight.";
+        if(m == "Hump") return " "+ n + " caresses " + owner + "'s tail, placing it between their legs, and giving a moan of pleasure as it is slowly pulled out!";
+        if(m == "Brush") return " "+ n + " brushes past " + owner + "'s tail, meeting their gaze with 'come-to-bed' eyes.";
+        if(m == "Fork") return " "+ n + " forks " + owner + ". Fork's em right in the ass. *^-^*";
+        if(m == "Yank") return " "+ n + " Yanks " + owner + "'s Tail! Pulling them closer and kissing softly.";
+        if(m == "Squeeze") return " "+ n + " puts their arms around " + owner + " and squeezes tight, nuzzling their head deep into " + owner + "'s chest. Ooh, feels so soft!";
+        if(m == "Hug") return " "+ n + " Hugs " + owner + " tightly, squeezing their bottom gently.";
+        if(m == "Play") return " "+ n + " plays with " + owner + "'s tail. " + owner + " moans with pleasure.";
+        if(m == "Stroke") return " "+ n + " strokes " + owner + "'s shivering body, feeling the soft fur through their fingers, and purring softly.";
+        if(m == "Tease") return " "+ n + " Teases " + owner + " with some erotic dancing.";
+        if(m == "Balloon") return " "+ n + " ties a balloon to " + owner + "'s tail, lifting it out of the way, before grabbing their hips and pulling them close.";
+    }
+    else if(NameTypeVal == "Mate")
+    {
+        if(m == "Fluff") return " "+ n + " fluffs " + owner + "'s tail and ties a pretty pink ribbon in it. " + owner + " blushes.";
+        if(m == "Poke") return " "+ n + " runs their fingers down " + owner + "'s back and pokes. " + owner +" shivers with delight.";
+        if(m == "Hump") return " "+ n + " caresses " + owner + "'s tail, placing it between their legs, and giving a moan of pleasure as it is slowly pulled out!";
+        if(m == "Brush") return " "+ n + " brushes past " + owner + "'s tail, meeting their gaze with 'come-to-bed' eyes.";
+        if(m == "Fork") return " "+ n + " forks " + owner + ". Fork's em right in the ass. *^-^*";
+        if(m == "Yank") return " "+ n + " Yanks " + owner + "'s Tail! Pulling them closer and kissing softly.";
+        if(m == "Squeeze") return " "+ n + " puts their arms around " + owner + " and squeezes tight, nuzzling their head deep into " + owner + "'s chest. Ooh, feels so soft!";
+        if(m == "Hug") return " "+ n + " Hugs " + owner + " tightly, squeezing their bottom gently.";
+        if(m == "Play") return " "+ n + " plays with " + owner + "'s tail. " + owner + " moans with pleasure.";
+        if(m == "Stroke") return " "+ n + " strokes " + owner + "'s shivering body, feeling the soft fur through their fingers, and purring softly.";
+        if(m == "Tease") return " "+ n + " Teases " + owner + " with some erotic dancing.";
+        if(m == "Balloon") return " "+ n + " ties a balloon to " + owner + "'s tail, lifting it out of the way, before grabbing their hips and pulling them close.";
+    }
+    else if(NameTypeVal == "Unwanted")
+    {
+        if(m == "Fluff") return " "+ n + " fluffs " + owner + "'s tail.";
+        if(m == "Poke") return " "+ n + " pokes " + owner + "'s tail. " + owner +" raises an eyebrow at them.";
+        if(m == "Hump") return " "+ n + " thinks about humping " + owner + "'s tail.";
+        if(m == "Brush") return " "+ n + " offers to brush " + owner + "'s tail, but is politely declined.";
+        if(m == "Fork") return " "+ n + " has a fork....and is proud...";
+        if(m == "Yank") return " "+ n + " thinks about yanking " + owner +"'s tail.";
+        if(m == "Squeeze") return " "+ n + " Squeezes " + owner + "'s Tail.";
+        if(m == "Hug") return " "+ n + " lets " + owner + "'s tail brush against their hand.";
+        if(m == "Play") return " "+ n + " plays 'The Secret of " + owner + "'s Tail' on their WII, but can't get past level 1.";
+        if(m == "Stroke") return " "+ n + " thinks about stroking " + owner + "'s tail.";
+        if(m == "Tease") return " "+ n + " feels teased by " + owner + "'s tail.";
+        if(m == "Balloon") return " "+ n + " lets a baloon float around the room.";
+    }
+    else if(NameTypeVal == "Enemy")
+    {
+        if(m == "Fluff") return " "+ n + " tries to fluff " + owner + "'s tail but misses.";
+        if(m == "Poke") return " "+ n + " pokes " + owner + "'s tail. " + owner +" rip's their arms off.";
+        if(m == "Hump") return " "+ n + " tries to grab " + owner + "'s tail but is struck by a sudden bout of diarrhea.";
+        if(m == "Brush") return " "+ n + " pulls out a bristle brush and reaches out to brush " + owner + "'s  tail, but lets go when an unexpected elbow cracks their skull.";
+        if(m == "Fork") return " "+ n + " should go fork themselves.";
+        if(m == "Yank") return " "+ n + " yanks themself.";
+        if(m == "Squeeze") return " "+ n + " Squeezes so hard they poo a little.";
+        if(m == "Hug") return " "+ n + " wants a hug.....and gets none.";
+        if(m == "Play") return " "+ n + " plays with themself until the police arrive.";
+        if(m == "Stroke") return " "+ n + " collapses and has a stroke.";
+        if(m == "Tease") return " "+ n + " tries to tease " + owner + ", but stops when it becomes apparent " + owner + " is getting pissed off.";
+        if(m == "Balloon") return " "+ n + " ties a large helium balloon to their neck, hanging themself comically.";
+    }
+    return "";
+}
+
+default
+{
+    attach(key n)
+    {
+        llResetScript();
+    }
+    on_rez(integer n)
+    {
+        llResetScript();
+    }
+    state_entry()
+    {        
+        chan = 100 + (integer)llFrand(20000);
+        owner = llKey2Name(llGetOwner());
+        llListen(chan,"","","");
+        initialize("");
+    }
+    touch_start(integer total_number)
+    {
+        key dk = llDetectedKey(0);
+        string Name = llDetectedName(0);
+        if(dk == llGetOwner())
+            llDialog(dk,"Change Tail option,",["Lock","Unlock","Reload"],chan);
+        else if(lock == FALSE)
+        {
+            integer index = llListFindList( Banned, [Name] );
+            if(index == -1)
+            {
+                llDialog(dk,"What do you want to do with "+owner+"'s Tail",list_one,chan);
+            }
+        }
+        else
+            llInstantMessage(dk,"This tail is locked.");
+    }
+    listen(integer c, string n, key i, string m)
+    {
+        // tail commands
+        if(m == "Lock")
+        {
+            lock = TRUE;
+            llOwnerSay("Locked");
+        }
+        else if(m == "Unlock")
+        {
+            lock = FALSE;
+            llOwnerSay("Unlocked");
+        }
+        else if(m == "Reload")
+        {
+            initialize("");
+        }
+        else
+        {
+            llSay(0,ShowMessage(n, m));
+        }
+    }
+
+    dataserver(key _query_id, string _data) 
+    {
+        if (_query_id == tmpCardKey)
+        {
+            // this is a line of our notecard
+            if (_data != EOF)
+            {    
+                // increment line count
+                tmpLines += [_data];
+                //request a next line
+                tmpLineCount++;
+                tmpCardKey = llGetNotecardLine(tmpNoteCardName, tmpLineCount);
+            }
+            else
+            {
+                notecardFinished(tmpNoteCardName);   
+            }
+        }
+    }
+
+}
