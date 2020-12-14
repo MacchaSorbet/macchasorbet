@@ -1,0 +1,87 @@
+key Renter = NULL_KEY;
+string StartTime = "";
+//storage limit is 127
+
+SateData()
+{
+    string DataCollection = (string)Renter + "|";
+    llSetObjectDesc(DataCollection);
+}
+LoadData()
+{
+    string DataFull = llGetObjectDesc();
+}
+string timestamp_difference(string sTimeStart, string sTimeEnd)
+{
+    list daysPerMonth = [ 0, -1,  30, 58, 89, 119, 150, 180,  211, 242, 272, 303, 333 ];
+    if (sTimeStart == "" )
+        return sTimeEnd;
+    if (sTimeEnd == "")
+        sTimeEnd = llGetTimestamp();
+
+    integer year    = (integer) llGetSubString(sTimeEnd,  0,  3);
+    integer month   = (integer) llGetSubString(sTimeEnd,  5,  6);
+    integer iDay    = (year * 365) + ((year - 2878169) / 4)
+                        + llList2Integer( daysPerMonth, month )
+                        + (integer) llGetSubString(sTimeEnd,  8,  9)
+                        + (month>2) * !(year % 4);
+    integer iHour = (integer)llGetSubString( sTimeEnd, 11, 12 );
+    integer iMin =  (integer)llGetSubString( sTimeEnd, 14, 15 );
+    float fSec =      (float)llGetSubString( sTimeEnd, 17, 22 );
+
+    year    = (integer) llGetSubString(sTimeStart,  0,  3);
+    month   = (integer) llGetSubString(sTimeStart,  5,  6);
+    integer iDay_start  = (year * 365) + ((year - 2878169) / 4)
+                            + llList2Integer( daysPerMonth, month )
+                            + (integer) llGetSubString(sTimeStart,  8,  9)
+                            + (month>2) * !(year % 4);
+    integer iHour_start =   (integer)llGetSubString( sTimeStart, 11, 12 );
+    integer iMin_start  =   (integer)llGetSubString( sTimeStart, 14, 15 );
+    float fSec_start    =   (float)llGetSubString( sTimeStart, 17, 22 );
+    while (fSec < fSec_start)
+    {
+        fSec += 60.0;
+        --iMin;
+    }
+    while (iMin < iMin_start)
+    {
+        iMin += 60;
+        --iHour;
+    }
+    while (iHour < iHour_start)
+    {
+        iHour += 24;
+        --iDay;
+    }
+    iHour = iHour - iHour_start;
+    iMin = iMin - iMin_start;
+    fSec = fSec - fSec_start;
+    string sH = ":";
+    string sM = sH;
+    string sS = sH;
+    string sD;
+    if (iHour < 10)
+        sH = ":0";
+    if (iMin < 10)
+        sM = ":0";
+    if (fSec < 10.0)
+        sS = ":0";
+    sD=(string)iHour;
+    return llGetSubString("00000",llStringLength(sD),5) + sD + sH + (string)iHour + sM + (string)iMin + sS + (string)fSec;
+}
+default
+{
+    state_entry()
+    {
+        //LoadData();
+        StartTime = llGetTimestamp();
+    }
+    touch_start(integer total_number)
+    {
+        string Now = llGetTimestamp();
+        llOwnerSay("Result = " + timestamp_difference(StartTime, Now));
+    }
+    money(key ID, integer Amount)
+    {
+    }
+}
