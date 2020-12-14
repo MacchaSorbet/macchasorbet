@@ -1,0 +1,271 @@
+//Maccha-Vend November 2008
+
+list ItemsList;
+list Settings;
+string gsCardOneName = "ItemsList";
+string gsSettingsName = "ObjectSettings";
+
+//Temporary variables for processing
+string g_sNoteCardName; // Name of the card to be read.
+list g_lTempLines;  // The resulting data pushed into a list
+integer g_iLine;    // The line count for the card reader
+key g_kQuery;       // The key of thge card being read
+
+//Display Variables
+integer ListEnd = 0;
+integer CurrentItem = 0;
+string CurrentItemName = "";
+float CurrentItemPrice = 0.0;
+string CurrentItemVendBox = "";
+string CurrentItemTexture = "";
+integer DisplayLinkNum = -1;
+
+//Money
+key CommisionKey = NULL_KEY;
+float Commision = 0.0;
+key MacchaKey = "d29ddc7f-1312-4264-b99a-e2bf5154fbfb";
+float MacchaCom = 2.0;
+float CommisionableMin = 10;
+
+initialize(string _action)
+{
+    if (_action == "")
+    {
+        llMessageLinked(LINK_SET, 0, "givenumber", NULL_KEY);
+        ItemsList = [];
+        g_sNoteCardName = gsCardOneName;
+        llOwnerSay("Loading items list.");
+        loadNoteCard(g_sNoteCardName);
+    }
+    else if (_action = "finish")
+    {
+        //Read settings
+        LoadSettings();
+        //Do something with the data
+        ListEnd = llGetListLength(ItemsList);
+        CurrentItem = 0;
+        DisplayItem();
+        llOwnerSay("Data Loaded. Maccha-Vend is ready.");
+    }
+}
+
+loadNoteCard( string _notecard )
+{
+    g_lTempLines = []; //clear the temp lines
+    g_sNoteCardName = _notecard;
+    g_iLine =0;
+    g_kQuery = llGetNotecardLine(g_sNoteCardName, g_iLine);
+}
+
+notecardFinished(string _notecard)
+{
+    if (_notecard == gsCardOneName)
+    {
+        ItemsList = g_lTempLines;
+        llOwnerSay("Loading settings.");
+        loadNoteCard(gsSettingsName);
+    }
+    else if (_notecard == gsSettingsName)
+    {
+        Settings = g_lTempLines;
+        initialize("finish");
+    }
+}
+
+LoadSettings()
+{
+    integer SettingsEnd = llGetListLength(Settings);
+    string ItemInfo = "";
+    integer i = 0;
+    for (i = 0; i< SettingsEnd; i++)
+    {
+        ItemInfo = llList2String(Settings, i);
+        list SingleItem = llParseStringKeepNulls(ItemInfo, ["="], []);
+        string str1 = llToUpper(llList2String(SingleItem,0));
+        string value = llList2String(SingleItem,1);
+        if(str1 == "COMMISSIONKEY" && value != "")
+        {
+            CommisionKey = (key)value;
+            llSay(0, "Setting CommisionKey to " + (string)CommisionKey);
+        }
+        else if(str1 == "COMMISSION" && value != "")
+        {
+            Commision = (float)value;
+            llSay(0, "Setting Commision to " + (string)Commision);
+        }
+        else if(str1 == "COMMISSIONABLEMIN" && value != "")
+        {
+            CommisionableMin = (float)value;
+            llSay(0, "Setting CommisionableMin to " + (string)CommisionableMin);
+        }
+    }
+}
+
+DisplayItem()
+{
+    string ItemInfo = llList2String(ItemsList, CurrentItem);
+    list SingleItem = llParseStringKeepNulls(ItemInfo, ["|"], []);
+    if(llGetListLength(SingleItem) < 3)
+    {
+        llOwnerSay("Item " +(string)CurrentItem+ " does not have the correct number of arguments.");
+        llOwnerSay("If you do not have " +(string)CurrentItem+ " items, this error may be because you have a blank line at the end of your Items notecard.");
+    }
+    else
+    {
+        CurrentItemName = llList2String(SingleItem,0); //Item Name
+        CurrentItemPrice = (float)llList2String(SingleItem,1); //Item Price
+        CurrentItemVendBox = llList2String(SingleItem,2); //Item Box
+        CurrentItemTexture = llList2String(SingleItem,3); //Item Texture
+        if(CurrentItemPrice == 0)
+        {
+            llSetTouchText("Buy");
+            llSetPayPrice(PAY_DEFAULT, [PAY_DEFAULT, PAY_DEFAULT, PAY_DEFAULT, PAY_DEFAULT]);        }
+        else
+        {
+            llSetTouchText("");
+            llSetPayPrice(PAY_HIDE, [(integer)CurrentItemPrice, PAY_HIDE, PAY_HIDE, PAY_HIDE]);
+        }
+
+        if(DisplayLinkNum != -1)
+            llSetLinkTexture(DisplayLinkNum, CurrentItemTexture, ALL_SIDES);
+    }
+}
+
+VendCurrentItem(key Buyer)
+{
+}
+
+default
+{
+    state_entry()
+    {
+        llRequestPermissions(llGetOwner(),PERMISSION_DEBIT);
+        initialize("");
+    }
+    dataserver(key _query_id, string _data)
+    {
+        if (_query_id == g_kQuery)
+        {
+            if (_data != EOF)
+            {
+                g_lTempLines += [_data];
+                g_iLine++;
+                g_kQuery = llGetNotecardLine(g_sNoteCardName, g_iLine);
+            }
+            else
+            {
+                notecardFinished(g_sNoteCardName);
+            }
+        }
+    }
+    link_message(integer sender, integer return_num, string msgname, key tex_name_or_key)
+    {
+        if(msgname == "vend")
+        {
+            VendCurrentItem(tex_name_or_key);
+        }
+        else if (msgname == "next")
+        {
+            if(CurrentItem == ListEnd - 1)
+                CurrentItem = 0;
+            else
+                CurrentItem = CurrentItem + 1;
+
+            DisplayItem();
+        }
+        else if(msgname == "previous")
+        {
+            if(CurrentItem == 0)
+                CurrentItem = ListEnd-1;
+            else
+                CurrentItem = CurrentItem - 1;
+
+            DisplayItem();
+        }
+        else if(msgname == "first")
+        {
+            CurrentItem = 0;
+            DisplayItem();
+        }
+        else if(msgname == "last")
+        {
+            CurrentItem = ListEnd;
+            DisplayItem();
+        }
+        else if(msgname == "displaynum")
+        {
+            DisplayLinkNum = return_num;
+        }
+    }
+    touch_start(integer total_number)
+    {
+        if(CurrentItemPrice > 0)
+            llSay(0, "Please right click and select the pay option to vend this item.");
+        else
+        {
+            llGiveInventory(llDetectedKey(0), CurrentItemVendBox);
+        }
+    }
+    money(key giver, integer amount)
+    {
+        if(amount < CurrentItemPrice)
+        {
+            llSay(0, "This item costs L$" + (string)CurrentItemPrice + "\nPlease enter correct ammount to purchase.");
+            return;
+        }
+        if(CurrentItemPrice > CommisionableMin)
+        {
+            float calc = CurrentItemPrice + 0.0;
+            float CommValue = calc * ( Commision/100 );
+            float MacchaValue = calc * ( MacchaCom/100 );
+            float Remainder = calc - (CommValue + MacchaValue);
+            float WhatsLeft = CurrentItemPrice - (CommValue + MacchaValue + Remainder);
+            Remainder = WhatsLeft + Remainder;
+            float GiveChange = amount - CurrentItemPrice;
+            
+            llGiveMoney( MacchaKey, (integer)MacchaValue);
+            llGiveMoney( CommisionKey, (integer)CommValue);
+            llGiveMoney( llGetOwner(), (integer)Remainder);
+            if(GiveChange > 0)
+            {
+                llGiveMoney(giver, (integer)GiveChange);
+                llSay(0, "You have paid too much. Your change has been refunded to you.");
+            }
+        }
+        else if(CurrentItemPrice == 0.0)
+        {
+            float GiveChange = amount;
+            if(GiveChange > 0)
+            {
+                llGiveMoney(giver, (integer)GiveChange);
+                llSay(0, "This item is free.");
+            }
+        }
+        else
+        {
+            if(CurrentItemPrice >= 10.0)
+            {
+                float calc = CurrentItemPrice + 0.0;
+                float MacchaValue = calc * ( MacchaCom/100 );
+                float Remainder = calc - MacchaValue;
+                float WhatsLeft = CurrentItemPrice - (MacchaValue + Remainder);
+                Remainder = WhatsLeft + Remainder;
+                float GiveChange = amount - CurrentItemPrice;
+            
+                llGiveMoney( MacchaKey, (integer)MacchaValue);
+                llGiveMoney( llGetOwner(), (integer)Remainder);
+                
+                if(GiveChange > 0)
+                    llGiveMoney(giver, (integer)GiveChange);
+            }
+            else
+            {
+                llGiveMoney(llGetOwner(), (integer)CurrentItemPrice);
+                float GiveChange = amount - CurrentItemPrice;
+                if(GiveChange > 0)
+                    llGiveMoney(giver, (integer)GiveChange);
+            }
+        }
+        llGiveInventory(giver, CurrentItemVendBox);
+    }
+}
